@@ -19,9 +19,10 @@
     <div class="glassmorphism p-5 shadow-lg mx-auto" style="max-width: 450px; width: 90%;">
         <div class="text-center mb-5">
             <h1 class="poppins-bold text-teal mb-2"><i class="bi bi-compass me-2"></i>Wanderlust</h1>
-            <p class="text-muted inter-medium">Welcome back! Please login to continue.</p>
+            <p id="authTitle" class="text-muted inter-medium">Welcome back! Please login to continue.</p>
         </div>
 
+        <!-- Login Form -->
         <form id="loginForm">
             <div class="mb-4">
                 <label class="form-label inter-medium small text-muted">Email Address</label>
@@ -34,30 +35,101 @@
             <button type="submit" class="btn btn-brand w-100 btn-lg rounded-pill shadow-sm py-3 mt-2">Sign In</button>
         </form>
 
+        <!-- Signup Form (Hidden) -->
+        <form id="signupForm" class="d-none">
+            <div class="mb-3">
+                <label class="form-label inter-medium small text-muted">Email Address</label>
+                <input type="email" id="sEmail" class="form-control form-control-lg border-0 bg-light rounded-4" placeholder="you@example.com" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label inter-medium small text-muted">Password</label>
+                <input type="password" id="sPassword" class="form-control form-control-lg border-0 bg-light rounded-4" placeholder="••••••••" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label inter-medium small text-muted">Join As</label>
+                <select id="sRole" class="form-select form-select-lg border-0 bg-light rounded-4">
+                    <option value="Tourist">Tourist</option>
+                    <option value="Hotel">Hotel Provider</option>
+                    <option value="Guide">Tour Guide</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-brand w-100 btn-lg rounded-pill shadow-sm py-3 mt-2">Create Account</button>
+        </form>
+
         <div class="text-center mt-4">
-            <p class="text-muted small">Don't have an account? <a href="#" class="text-teal fw-bold">Sign up</a></p>
+            <p id="toggleText" class="text-muted small">Don't have an account? <a href="#" id="toggleAuth" class="text-teal fw-bold">Sign up</a></p>
         </div>
     </div>
 
+    <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+    <script src="../services/supabase.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../components/toast.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const authTitle = document.getElementById('authTitle');
+        const toggleAuth = document.getElementById('toggleAuth');
+        const toggleText = document.getElementById('toggleText');
+
+        let isLogin = true;
+
+        toggleAuth.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            if (isLogin) {
+                loginForm.classList.remove('d-none');
+                signupForm.classList.add('d-none');
+                authTitle.textContent = 'Welcome back! Please login to continue.';
+                toggleText.innerHTML = "Don't have an account? <a href='#' id='toggleAuth' class='text-teal fw-bold'>Sign up</a>";
+            } else {
+                loginForm.classList.add('d-none');
+                signupForm.classList.remove('d-none');
+                authTitle.textContent = 'Join Wanderlust to start your journey.';
+                toggleText.innerHTML = "Already have an account? <a href='#' id='toggleAuth' class='text-teal fw-bold'>Sign in</a>";
+            }
+            // Bind the new toggle link
+            document.getElementById('toggleAuth').addEventListener('click', (ev) => {
+                ev.preventDefault();
+                toggleAuth.click();
+            });
+        });
+
+        const redirectUser = (role) => {
+            const paths = {
+                Tourist: 'user-home.html',
+                Hotel: 'hotel-dashboard.html',
+                Guide: 'guide-dashboard.html',
+                Admin: 'admin-dashboard.html'
+            };
+            window.location.href = paths[role] || 'user-home.html';
+        };
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            if (window.authAPI.login(email, password)) {
-                // Determine redirect based on role in JS
-                const user = JSON.parse(localStorage.getItem('user'));
-                const paths = {
-                    Tourist: 'user-home.html',
-                    Hotel: 'hotel-dashboard.html',
-                    Guide: 'guide-dashboard.html',
-                    Admin: 'admin-dashboard.html'
-                };
-                window.location.href = paths[user.role];
+            const res = await window.authAPI.login(email, password);
+            if (res.success) {
+                redirectUser(res.user.role);
             } else {
-                alert('Invalid credentials. Use any email containing "tourist" for demo.');
+                window.showToast('Login Failed', res.error, 'danger');
+            }
+        });
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('sEmail').value;
+            const password = document.getElementById('sPassword').value;
+            const role = document.getElementById('sRole').value;
+            const res = await window.authAPI.signup(email, password, role);
+            if (res.success) {
+                window.showToast('Success!', 'Account created successfully. Redirecting...', 'success');
+                setTimeout(() => redirectUser(res.user.role), 1500);
+            } else {
+                window.showToast('Signup Failed', res.error, 'danger');
             }
         });
     </script>

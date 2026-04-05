@@ -1,10 +1,13 @@
 // Supabase Client Initialization
-// Replace with your credentials
 const SUPABASE_URL = 'https://mgmnbpwsxmjajqpidpna.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nbW5icHdzeG1qYWpxcGlkcG5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDI0MTIsImV4cCI6MjA5MDk3ODQxMn0.zhqzzv7w3henWTt2KM8juOHDj4a5QfqBh_g6sMGBsX4';
 
-// Mock DB for development/preview
+// Initialize Supabase Client
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Mock DB for development/preview fallback
 window.mockDB = {
+    // ... (rest of mockDB content)
     DESTINATIONS: [
         { DestinationID: 1, DestinationName: 'Paris, France', Description: 'The romantic city of lights with iconic landmarks.', ImageURL: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=800' },
         { DestinationID: 2, DestinationName: 'Bali, Indonesia', Description: 'Tropical paradise with serene beaches and lush greenery.', ImageURL: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800' },
@@ -23,38 +26,78 @@ window.mockDB = {
         { RoomID: 1, HotelID: 1, RoomType: 'Deluxe Suite', Price: 15000 },
         { RoomID: 2, HotelID: 1, RoomType: 'Ocean View', Price: 22000 }
     ],
-    GUIDES: [
-        { GuideID: 1, Name: 'Made Wirawan', Rating: 4.9, Languages: ['English', 'Indonesian'] },
-        { GuideID: 2, Name: 'Jean Dupont', Rating: 4.8, Languages: ['English', 'French'] }
-    ],
-    BOOKINGS: [
-        { BookingID: 101, user_id: 1, type: 'package', item_id: 1, total_price: 135000, date: '2024-06-15', Status: 'Confirmed', GuideName: 'Made Wirawan' }
-    ],
+    BOOKINGS: [],
     REVIEWS: []
 };
 
 // API Service Layer
 window.supabaseAPI = {
-    async getDestinations() { return Promise.resolve(window.mockDB.DESTINATIONS); },
-    async getPackages() { return Promise.resolve(window.mockDB.PACKAGES); },
-    async getHotels() { return Promise.resolve(window.mockDB.HOTELS); },
-    async getBookings(userId) { return Promise.resolve(window.mockDB.BOOKINGS); },
-    
-    async createBooking(data) {
-        data.BookingID = Math.floor(Math.random() * 1000);
-        data.Status = 'Pending';
-        window.mockDB.BOOKINGS.push(data);
-        return Promise.resolve(data);
-    },
-    
-    async cancelBooking(id) {
-        const booking = window.mockDB.BOOKINGS.find(b => b.BookingID === id);
-        if (booking) booking.Status = 'Cancelled';
-        return Promise.resolve({ success: true });
+    // Auth Methods
+    async signUp(email, password, role) {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        
+        // Save role in profiles table
+        if (data.user) {
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert([{ id: data.user.id, email: email, role: role }]);
+            if (profileError) console.error('Error creating profile:', profileError);
+        }
+        return data;
     },
 
-    async createReview(data) {
-        window.mockDB.REVIEWS.push({ ...data, date: new Date().toISOString() });
-        return Promise.resolve({ success: true });
+    async signIn(email, password) {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        return data;
+    },
+
+    async getUserProfile(uid) {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', uid)
+            .single();
+        if (error) return { role: 'Tourist' }; // Default fallback
+        return data;
+    },
+
+    async signOut() {
+        return await supabase.auth.signOut();
+    },
+
+    // Data Methods (with mock fallback if table doesn't exist)
+    async getDestinations() { 
+        const { data } = await supabase.from('DESTINATIONS').select('*');
+        return data || window.mockDB.DESTINATIONS;
+    },
+    async getPackages() { 
+        const { data } = await supabase.from('PACKAGES').select('*');
+        return data || window.mockDB.PACKAGES;
+    },
+    async getHotels() { 
+        const { data } = await supabase.from('HOTELS').select('*');
+        return data || window.mockDB.HOTELS;
+    },
+    async getBookings(userId) { 
+        const { data } = await supabase.from('BOOKINGS').select('*').eq('user_id', userId);
+        return data || window.mockDB.BOOKINGS;
+    },
+    
+    async createBooking(bookingData) {
+        const { data, error } = await supabase.from('BOOKINGS').insert([bookingData]);
+        if (error) {
+            // Mock fallback
+            bookingData.BookingID = Math.floor(Math.random() * 1000);
+            window.mockDB.BOOKINGS.push(bookingData);
+            return bookingData;
+        }
+        return data[0];
+    },
+    
+    async createReview(reviewData) {
+        const { data, error } = await supabase.from('REVIEWS').insert([reviewData]);
+        return error ? { success: false } : { success: true };
     }
 };
