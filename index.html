@@ -3,31 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wanderlust - Your Journey Begins Here</title>
-    <!-- Simple redirection or landing logic -->
+    <title>Wanderlust - Redirecting...</title>
+    <!-- Critical SDKs in Head -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./services/supabase.js"></script>
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            background-color: #f8f9fa; 
+        }
+        .loader-card { 
+            text-align: center; 
+            padding: 3rem; 
+            background: white; 
+            border-radius: 1.5rem; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+        }
+    </style>
+</head>
+<body>
+    <div class="loader-card">
+        <h1 style="color: #1e3c72; font-family: 'Poppins', sans-serif; font-weight: 700;">Wanderlust</h1>
+        <div class="spinner-border text-primary mb-3" role="status"></div>
+        <p style="color: #636e72;">Welcome! Redirecting you to your dashboard...</p>
+    </div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (user) {
-                // Redirect based on role
+            console.log('Index Redirector Loaded');
+            const userJson = localStorage.getItem('user');
+            
+            if (!userJson) {
+                console.log('No user session found. Redirecting to login...');
+                window.location.href = 'pages/auth.html';
+                return;
+            }
+
+            try {
+                const user = JSON.parse(userJson);
                 const paths = {
                     Tourist: 'pages/user-home.html',
                     Hotel: 'pages/hotel-dashboard.html',
                     Guide: 'pages/guide-dashboard.html',
                     Admin: 'pages/admin-dashboard.html'
                 };
-                window.location.href = paths[user.role] || 'pages/auth.html';
-            } else {
+                
+                const target = paths[user.role] || 'pages/auth.html';
+                console.log('User role:', user.role, 'Target:', target);
+                window.location.href = target;
+            } catch (e) {
+                console.error('Error parsing user session:', e);
+                localStorage.removeItem('user');
                 window.location.href = 'pages/auth.html';
             }
         });
     </script>
-</head>
-<body style="background: #f8fbff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh;">
-    <div style="text-align: center;">
-        <h1 style="color: #1e3c72;">Wanderlust</h1>
-        <p style="color: #636e72;">Welcome! Redirecting you to your dashboard...</p>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </body>
 </html>

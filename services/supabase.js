@@ -2,8 +2,13 @@
 const SUPABASE_URL = 'https://mgmnbpwsxmjajqpidpna.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nbW5icHdzeG1qYWpxcGlkcG5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDI0MTIsImV4cCI6MjA5MDk3ODQxMn0.zhqzzv7w3henWTt2KM8juOHDj4a5QfqBh_g6sMGBsX4';
 
-// Initialize Supabase Client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase Client with a safer variable name to avoid global conflicts
+let _supabase;
+if (window.supabase) {
+    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+    console.error('Supabase SDK not loaded. Please ensure the CDN script is included before this script.');
+}
 
 // Mock DB for development/preview fallback
 window.mockDB = {
@@ -34,12 +39,13 @@ window.mockDB = {
 window.supabaseAPI = {
     // Auth Methods
     async signUp(email, password, role) {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (!_supabase) throw new Error('Supabase client not initialized');
+        const { data, error } = await _supabase.auth.signUp({ email, password });
         if (error) throw error;
         
         // Save role in profiles table
         if (data.user) {
-            const { error: profileError } = await supabase
+            const { error: profileError } = await _supabase
                 .from('profiles')
                 .insert([{ id: data.user.id, email: email, role: role }]);
             if (profileError) console.error('Error creating profile:', profileError);
@@ -48,47 +54,58 @@ window.supabaseAPI = {
     },
 
     async signIn(email, password) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!_supabase) throw new Error('Supabase client not initialized');
+        const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         return data;
     },
 
     async getUserProfile(uid) {
-        const { data, error } = await supabase
+        if (!_supabase) return { role: 'Tourist' };
+        const { data, error } = await _supabase
             .from('profiles')
             .select('role')
             .eq('id', uid)
             .single();
-        if (error) return { role: 'Tourist' }; // Default fallback
+        if (error) return { role: 'Tourist' };
         return data;
     },
 
     async signOut() {
-        return await supabase.auth.signOut();
+        if (!_supabase) return;
+        return await _supabase.auth.signOut();
     },
 
     // Data Methods (with mock fallback if table doesn't exist)
     async getDestinations() { 
-        const { data } = await supabase.from('DESTINATIONS').select('*');
+        if (!_supabase) return window.mockDB.DESTINATIONS;
+        const { data } = await _supabase.from('DESTINATIONS').select('*');
         return data || window.mockDB.DESTINATIONS;
     },
     async getPackages() { 
-        const { data } = await supabase.from('PACKAGES').select('*');
+        if (!_supabase) return window.mockDB.PACKAGES;
+        const { data } = await _supabase.from('PACKAGES').select('*');
         return data || window.mockDB.PACKAGES;
     },
     async getHotels() { 
-        const { data } = await supabase.from('HOTELS').select('*');
+        if (!_supabase) return window.mockDB.HOTELS;
+        const { data } = await _supabase.from('HOTELS').select('*');
         return data || window.mockDB.HOTELS;
     },
     async getBookings(userId) { 
-        const { data } = await supabase.from('BOOKINGS').select('*').eq('user_id', userId);
+        if (!_supabase) return window.mockDB.BOOKINGS;
+        const { data } = await _supabase.from('BOOKINGS').select('*').eq('user_id', userId);
         return data || window.mockDB.BOOKINGS;
     },
     
     async createBooking(bookingData) {
-        const { data, error } = await supabase.from('BOOKINGS').insert([bookingData]);
+        if (!_supabase) {
+            bookingData.BookingID = Math.floor(Math.random() * 1000);
+            window.mockDB.BOOKINGS.push(bookingData);
+            return bookingData;
+        }
+        const { data, error } = await _supabase.from('BOOKINGS').insert([bookingData]);
         if (error) {
-            // Mock fallback
             bookingData.BookingID = Math.floor(Math.random() * 1000);
             window.mockDB.BOOKINGS.push(bookingData);
             return bookingData;
@@ -97,7 +114,11 @@ window.supabaseAPI = {
     },
     
     async createReview(reviewData) {
-        const { data, error } = await supabase.from('REVIEWS').insert([reviewData]);
+        if (!_supabase) {
+            window.mockDB.REVIEWS.push({ ...reviewData, date: new Date().toISOString() });
+            return { success: true };
+        }
+        const { data, error } = await _supabase.from('REVIEWS').insert([reviewData]);
         return error ? { success: false } : { success: true };
     }
 };
