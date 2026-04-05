@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wanderlust - Your Journey Begins Here</title>
+    <!-- Simple redirection or landing logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                // Redirect based on role
+                const paths = {
+                    Tourist: 'pages/user-home.html',
+                    Hotel: 'pages/hotel-dashboard.html',
+                    Guide: 'pages/guide-dashboard.html',
+                    Admin: 'pages/admin-dashboard.html'
+                };
+                window.location.href = paths[user.role] || 'pages/auth.html';
+            } else {
+                window.location.href = 'pages/auth.html';
+            }
+        });
+    </script>
+</head>
+<body style="background: #f8fbff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+    <div style="text-align: center;">
+        <h1 style="color: #1e3c72;">Wanderlust</h1>
+        <p style="color: #636e72;">Welcome! Redirecting you to your dashboard...</p>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</body>
+</html>
