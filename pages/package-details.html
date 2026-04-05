@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Details - Wanderlust</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .pkg-hero { height: 50vh; background-size: cover; background-position: center; position: relative; }
+        .pkg-hero-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
+    </style>
+</head>
+<body data-required-role="Tourist">
+    <div id="navbar-container"></div>
+    
+    <div class="pkg-hero" id="heroSection">
+        <div class="pkg-hero-overlay d-flex align-items-end pb-5">
+            <div class="container text-white slide-up">
+                <span class="badge bg-teal p-2 px-3 rounded-pill mb-3" id="pkgDuration"><i class="bi bi-clock me-1"></i>-- Days</span>
+                <h1 class="display-4 poppins-bold" id="pkgName">Loading...</h1>
+                <p class="lead inter-regular" id="pkgDest"><i class="bi bi-geo-alt me-2"></i>Destination</p>
+            </div>
+        </div>
+    </div>
+
+    <section class="container mt-5 fade-in">
+        <div class="row g-5">
+            <div class="col-lg-8">
+                <h3 class="poppins-semibold mb-3">About This Tour</h3>
+                <p class="inter-regular text-muted lh-lg" id="pkgDesc">Loading description...</p>
+                <h4 class="poppins-semibold mt-5 mb-3">What's Included</h4>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="glassmorphism p-3 d-flex align-items-center">
+                            <i class="bi bi-building fs-3 text-teal me-3"></i>
+                            <div><h6 class="poppins-semibold mb-0">Premium Hotel</h6><small class="text-muted">Included</small></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="glassmorphism p-3 d-flex align-items-center">
+                            <i class="bi bi-person-badge fs-3 text-teal me-3"></i>
+                            <div><h6 class="poppins-semibold mb-0">Expert Guide</h6><small class="text-muted">10% Fee applies</small></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="glassmorphism p-4 sticky-top" style="top: 100px;">
+                    <h4 class="poppins-semibold mb-4">Price Breakdown</h4>
+                    <div class="d-flex justify-content-between mb-2"><span>Base Price</span><strong id="pBase">₹0</strong></div>
+                    <div class="d-flex justify-content-between mb-2"><span>Hotel Est.</span><strong id="pHotel">₹0</strong></div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fs-5">Est. Total</span>
+                        <span class="poppins-bold fs-3 text-teal" id="pTotal">₹0</span>
+                    </div>
+                    <a href="#" id="bookBtn" class="btn btn-brand w-100 btn-lg rounded-pill">Book Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/role.js"></script>
+    <script src="../services/supabase.js"></script>
+    <script src="../components/navbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || 1;
+            try {
+                const packages = await window.supabaseAPI.getPackages();
+                const pkg = packages.find(p => p.PackageID == id);
+                if (pkg) {
+                    document.getElementById('heroSection').style.backgroundImage = `url('${pkg.ImageURL}')`;
+                    document.getElementById('pkgDuration').innerHTML = `<i class="bi bi-clock me-1"></i>${pkg.Duration} Days`;
+                    document.getElementById('pkgName').textContent = pkg.PackageName;
+                    document.getElementById('pkgDesc').textContent = pkg.Description;
+                    document.getElementById('pBase').textContent = '₹' + pkg.Price;
+                    const hotelPrice = 20000;
+                    document.getElementById('pHotel').textContent = '₹' + hotelPrice;
+                    document.getElementById('pTotal').textContent = '₹' + (pkg.Price + hotelPrice);
+                    document.getElementById('bookBtn').href = `booking.html?type=package&id=${pkg.PackageID}&base=${pkg.Price}&hotel=${hotelPrice}`;
+                }
+            } catch(e) {}
+        });
+    </script>
+</body>
+</html>

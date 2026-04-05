@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Wanderlust</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-required-role="Tourist">
+    <div id="navbar-container"></div>
+    <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1060;"></div>
+
+    <div style="height: 100px;"></div>
+
+    <section class="container mt-4 mb-5 fade-in">
+        <h2 class="poppins-bold mb-4"><i class="bi bi-shield-check me-2 text-teal"></i>Complete Your Booking</h2>
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="glassmorphism p-4 mb-4">
+                    <h5 class="poppins-semibold mb-4">Traveler Information</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label small">First Name</label><input type="text" class="form-control bg-light border-0" placeholder="John"></div>
+                        <div class="col-md-6"><label class="form-label small">Last Name</label><input type="text" class="form-control bg-light border-0" placeholder="Doe"></div>
+                        <div class="col-12"><label class="form-label small">Email Address</label><input type="email" class="form-control bg-light border-0" placeholder="john.doe@example.com"></div>
+                    </div>
+                </div>
+                <div class="glassmorphism p-4">
+                    <h5 class="poppins-semibold mb-4">Payment Method</h5>
+                    <div class="form-check p-3 border rounded-4 mb-3 border-teal bg-teal bg-opacity-10 d-flex align-items-center">
+                        <input class="form-check-input ms-0 me-3" type="radio" checked>
+                        <label class="form-check-label inter-medium w-100">Credit / Debit Card</label>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12"><label class="form-label small">Card Number</label><input type="text" class="form-control bg-light border-0" placeholder="0000 0000 0000 0000"></div>
+                        <div class="col-md-6"><label class="form-label small">Expiry Date</label><input type="text" class="form-control bg-light border-0" placeholder="MM/YY"></div>
+                        <div class="col-md-6"><label class="form-label small">CVV</label><input type="password" class="form-control bg-light border-0" placeholder="***"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="glassmorphism p-4 sticky-top" style="top: 100px;">
+                    <h5 class="poppins-semibold mb-3">Order Summary</h5>
+                    <div id="bookingSummary"><div class="text-center py-4"><div class="spinner-border text-teal"></div></div></div>
+                    <hr class="my-4">
+                    <div id="priceBreakdown" class="mb-4"></div>
+                    <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-4">
+                        <span class="fs-5">Final Total</span>
+                        <span class="poppins-bold fs-3 text-teal" id="finalTotal">₹0</span>
+                    </div>
+                    <button id="confirmBookingBtn" class="btn btn-brand w-100 btn-lg rounded-pill shadow-sm mt-4">Confirm & Pay</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/role.js"></script>
+    <script src="../services/supabase.js"></script>
+    <script src="../components/navbar.js"></script>
+    <script src="../components/modal.js"></script>
+    <script src="../components/toast.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const type = params.get('type');
+            const id = params.get('id');
+            const basePrice = parseFloat(params.get('base') || params.get('price') || 0);
+            const hotelPrice = parseFloat(params.get('hotel') || 0);
+
+            const summaryEl = document.getElementById('bookingSummary');
+            const breakdownEl = document.getElementById('priceBreakdown');
+            const finalTotalEl = document.getElementById('finalTotal');
+
+            let total = 0;
+            if (type === 'package') {
+                const guide = 0.1 * (basePrice + hotelPrice);
+                const admin = 0.1 * (basePrice + hotelPrice);
+                const tax = 0.05 * (basePrice + hotelPrice);
+                total = basePrice + hotelPrice + guide + admin + tax;
+                breakdownEl.innerHTML = `
+                    <div class="d-flex justify-content-between text-muted mb-2"><span>Base Package</span><span>₹${basePrice}</span></div>
+                    <div class="d-flex justify-content-between text-muted mb-2"><span>Hotel Est.</span><span>₹${hotelPrice}</span></div>
+                    <div class="d-flex justify-content-between text-muted mb-2"><span>Service Fee (20%)</span><span>₹${(guide+admin).toFixed(2)}</span></div>
+                    <div class="d-flex justify-content-between text-muted mb-2"><span>Taxes (5%)</span><span>₹${tax.toFixed(2)}</span></div>
+                `;
+            } else {
+                const platform = 0.2 * basePrice;
+                const tax = 0.05 * basePrice;
+                total = basePrice + platform + tax;
+                breakdownEl.innerHTML = `
+                    <div class="d-flex justify-content-between text-muted mb-2"><span>Room Rate</span><span>₹${basePrice}</span></div>
+                    <div class="d-flex justify-content-between text-muted mb-2"><span>Platform Fee (20%)</span><span>₹${platform.toFixed(2)}</span></div>
+                    <div class="d-flex justify-content-between text-muted mb-2"><span>Taxes (5%)</span><span>₹${tax.toFixed(2)}</span></div>
+                `;
+            }
+            finalTotalEl.textContent = '₹' + total.toFixed(2);
+            summaryEl.innerHTML = `<div class="p-3 bg-light rounded-4 inter-medium"><i class="bi bi-tag-fill me-2"></i>${type === 'package' ? 'Tour Package Booking' : 'Hotel Room Booking'}</div>`;
+
+            document.getElementById('confirmBookingBtn').addEventListener('click', async () => {
+                window.showAlertModal({
+                    title: 'Confirm Payment',
+                    message: `Are you sure you want to proceed with the payment of <strong>₹${total.toFixed(2)}</strong>?`,
+                    type: 'teal',
+                    onConfirm: async () => {
+                        await window.supabaseAPI.createBooking({ type, item_id: id, total_price: total });
+                        window.showToast('Success!', 'Registration complete. Your trip is booked.', 'success');
+                        setTimeout(() => window.location.href = 'my-trips.html', 1500);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Dashboard - Wanderlust</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-required-role="Guide">
+    <div id="navbar-container"></div>
+    <div style="height: 100px;"></div>
+
+    <section class="container mt-4 mb-5 fade-in">
+        <h2 class="poppins-bold mb-4">Tour Guide Dashboard</h2>
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="glassmorphism p-4 mb-4">
+                    <h5 class="poppins-semibold mb-3">Availability Status</h5>
+                    <div class="form-check form-switch fs-5 mb-0">
+                        <input class="form-check-input" type="checkbox" id="guideAvail" checked>
+                        <label class="form-check-label inter-medium" for="guideAvail">Available for tours</label>
+                    </div>
+                </div>
+                <div class="glassmorphism p-4">
+                    <h5 class="poppins-semibold mb-4">Price Portfolio</h5>
+                    <div class="mb-3">
+                        <label class="form-label inter-medium small">Daily Rate (₹)</label>
+                        <input type="number" class="form-control bg-light border-0" value="7500">
+                    </div>
+                    <button class="btn btn-brand w-100 rounded-pill">Update Rate</button>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="glassmorphism p-4">
+                    <h5 class="poppins-semibold mb-4">Upcoming Assignments</h5>
+                    <p class="text-center py-5 text-muted inter-regular">No upcoming assignments for this week.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/role.js"></script>
+    <script src="../services/supabase.js"></script>
+    <script src="../components/navbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Details - Wanderlust</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-required-role="Tourist">
+    <div id="navbar-container"></div>
+    <div style="height: 100px;"></div>
+
+    <section class="container mt-4 fade-in">
+        <h2 class="poppins-bold mb-1" id="hName">Hotel Details</h2>
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i> <span class="text-muted ms-1" id="hRating">4.5</span></span>
+            <span class="text-muted inter-regular"><i class="bi bi-geo-alt me-1"></i>Great location</span>
+        </div>
+
+        <div class="row g-2 mb-5">
+            <div class="col-md-8">
+                <img src="" id="hImage" class="img-fluid rounded-4 w-100 object-fit-cover" style="height: 400px;">
+            </div>
+            <div class="col-md-4 d-flex flex-column gap-2">
+                <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=400" class="img-fluid rounded-4 w-100 object-fit-cover flex-grow-1" style="height: 195px;">
+                <img src="https://images.unsplash.com/photo-1584132967334-10e028b1853a?auto=format&fit=crop&q=80&w=400" class="img-fluid rounded-4 w-100 object-fit-cover flex-grow-1" style="height: 195px;">
+            </div>
+        </div>
+
+        <div class="row g-5">
+            <div class="col-lg-8">
+                <h4 class="poppins-semibold mb-3">Available Rooms</h4>
+                <div id="roomsContainer">
+                    <div class="text-center py-4"><div class="spinner-border text-teal"></div></div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="glassmorphism p-4 sticky-top" style="top: 100px;">
+                    <h5 class="poppins-semibold mb-3">Amenities</h5>
+                    <ul class="list-unstyled inter-regular lh-lg text-muted">
+                        <li><i class="bi bi-wifi me-2 text-teal"></i> Free High-Speed WiFi</li>
+                        <li><i class="bi bi-cup-hot me-2 text-teal"></i> Free Breakfast</li>
+                        <li><i class="bi bi-water me-2 text-teal"></i> Swimming Pool</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/role.js"></script>
+    <script src="../services/supabase.js"></script>
+    <script src="../components/navbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || 1; 
+
+            try {
+                const hotels = await window.supabaseAPI.getHotels();
+                const hotel = hotels.find(h => h.HotelID == id);
+                if (hotel) {
+                    document.getElementById('hName').textContent = hotel.HotelName;
+                    document.getElementById('hRating').textContent = hotel.Rating;
+                    document.getElementById('hImage').src = hotel.ImageURL;
+
+                    const roomsContainer = document.getElementById('roomsContainer');
+                    const rooms = window.mockDB.ROOMS.filter(r => r.HotelID == id);
+                    roomsContainer.innerHTML = '';
+                    rooms.forEach(room => {
+                        const div = document.createElement('div');
+                        div.className = 'card border-0 shadow-sm rounded-4 mb-3 p-4 glassmorphism-hover';
+                        div.innerHTML = `
+                            <div class="row g-0 align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="poppins-semibold mb-1">${room.RoomType}</h5>
+                                    <p class="text-muted small mb-0"><i class="bi bi-person me-1"></i>2 Guests &nbsp; <i class="bi bi-check-circle me-1 text-success"></i>Free Cancellation</p>
+                                </div>
+                                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                    <div class="mb-2">
+                                        <span class="fs-4 poppins-bold text-teal">₹${room.Price}</span>
+                                        <span class="text-muted small">/night</span>
+                                    </div>
+                                    <a href="booking.html?type=hotel&id=${room.RoomID}&price=${room.Price}&hotel_id=${hotel.HotelID}" class="btn btn-brand rounded-pill px-4">Select</a>
+                                </div>
+                            </div>
+                        `;
+                        roomsContainer.appendChild(div);
+                    });
+                }
+            } catch(e){}
+        });
+    </script>
+</body>
+</html>

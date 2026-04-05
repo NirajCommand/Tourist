@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Wanderlust</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-required-role="Admin">
+    <div id="navbar-container"></div>
+    <div style="height: 100px;"></div>
+
+    <section class="container mt-4 mb-5 fade-in">
+        <h2 class="poppins-bold mb-4">System Administration</h2>
+        
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="glassmorphism p-3 h-100">
+                    <div class="nav flex-column nav-pills" id="adminTabs" role="tablist">
+                        <button class="nav-link active poppins-semibold text-start px-4 py-3 border-0 rounded-4 mb-2" data-bs-toggle="pill" data-bs-target="#tabDest">
+                            <i class="bi bi-geo-alt me-2"></i> Destinations
+                        </button>
+                        <button class="nav-link poppins-semibold text-start px-4 py-3 border-0 rounded-4 mb-2" data-bs-toggle="pill" data-bs-target="#tabPkg">
+                            <i class="bi bi-box me-2"></i> Packages
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="tab-content" id="nav-tabContent">
+                    <!-- Destinations Tab -->
+                    <div class="tab-pane fade show active" id="tabDest">
+                        <div class="glassmorphism p-4">
+                            <h4 class="poppins-bold mb-4">Active Destinations</h4>
+                            <div id="adminDestGrid" class="row g-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/role.js"></script>
+    <script src="../services/supabase.js"></script>
+    <script src="../components/navbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const destGrid = document.getElementById('adminDestGrid');
+            try {
+                const destinations = await window.supabaseAPI.getDestinations();
+                destinations.forEach(d => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-6';
+                    col.innerHTML = `
+                        <div class="d-flex align-items-center p-3 bg-light rounded-4">
+                            <img src="${d.ImageURL}" class="rounded-3 me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                            <div class="flex-grow-1">
+                                <h6 class="poppins-semibold mb-0">${d.DestinationName}</h6>
+                                <p class="small text-muted mb-0">ID: ${d.DestinationID}</p>
+                            </div>
+                            <button class="btn btn-light btn-sm rounded-circle"><i class="bi bi-pencil"></i></button>
+                        </div>
+                    `;
+                    destGrid.appendChild(col);
+                });
+            } catch (e) {}
+        });
+    </script>
+</body>
+</html>

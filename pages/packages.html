@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packages - Wanderlust</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body data-required-role="Tourist">
+    <div id="navbar-container"></div>
+    <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1060;"></div>
+
+    <div style="height: 100px;"></div>
+
+    <section class="container mt-4 mb-5 fade-in">
+        <h2 class="poppins-bold mb-4">Tour Packages</h2>
+        
+        <div class="row g-4">
+            <!-- Sidebar Filters -->
+            <div class="col-lg-3">
+                <div class="glassmorphism p-4 sticky-top" style="top: 100px;">
+                    <h5 class="poppins-semibold mb-3"><i class="bi bi-funnel me-2"></i>Filters</h5>
+                    
+                    <div class="mb-4">
+                        <label class="form-label inter-medium text-muted">Location</label>
+                        <select id="locationFilter" class="form-select bg-light border-0">
+                            <option value="">All Locations</option>
+                            <option value="Paris">Paris</option>
+                            <option value="Bali">Bali</option>
+                            <option value="Santorini">Santorini</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label inter-medium text-muted">Price Range</label>
+                        <input type="range" class="form-range" min="0" max="25000" step="500" id="priceRange" oninput="document.getElementById('priceVal').textContent = '₹'+this.value">
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>₹0</span>
+                            <span id="priceVal" class="text-teal poppins-semibold">₹12500</span>
+                            <span>₹25k+</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label inter-medium text-muted">Duration (Days)</label>
+                        <select id="durationFilter" class="form-select bg-light border-0">
+                            <option value="">Any Duration</option>
+                            <option value="1-3">1-3 Days</option>
+                            <option value="4-7">4-7 Days</option>
+                            <option value="8+">8+ Days</option>
+                        </select>
+                    </div>
+
+                    <button id="applyFiltersBtn" class="btn btn-brand w-100 rounded-pill">Apply Filters</button>
+                    <button id="clearFiltersBtn" class="btn btn-link w-100 text-muted small mt-2 text-decoration-none">Clear All</button>
+                </div>
+            </div>
+
+            <!-- Packages Grid -->
+            <div class="col-lg-9">
+                <div class="row g-4" id="packagesGrid">
+                    <div class="col-12 text-center py-5" id="packagesLoading">
+                        <div class="spinner-border text-teal" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/role.js"></script>
+    <script src="../services/supabase.js"></script>
+    <script src="../components/navbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const pkgGrid = document.getElementById('packagesGrid');
+            const pkgLoading = document.getElementById('packagesLoading');
+            let allPackages = [];
+
+            // Get query params
+            const params = new URLSearchParams(window.location.search);
+            const searchDest = params.get('dest');
+            
+            // Set initial filter value if coming from search
+            if (searchDest) {
+                document.getElementById('locationFilter').value = searchDest;
+            }
+
+            const renderPackages = (packages) => {
+                pkgGrid.innerHTML = '';
+                if (packages.length === 0) {
+                    pkgGrid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">No packages match your filters.</p></div>';
+                    return;
+                }
+                
+                packages.forEach(pkg => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-6';
+                    col.innerHTML = `
+                        <div class="card border-0 shadow-sm rounded-4 h-100 card-hover">
+                            <div class="position-relative">
+                                <img src="${pkg.ImageURL}" class="card-img-top rounded-top-4" style="height: 220px; object-fit: cover;">
+                                <div class="position-absolute top-0 end-0 m-3 glassmorphism-dark px-2 py-1 rounded fs-6">
+                                    <i class="bi bi-star-fill text-warning me-1"></i>${pkg.Rating}
+                                </div>
+                            </div>
+                            <div class="card-body p-4 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-teal text-white rounded-pill px-3 py-2"><i class="bi bi-clock me-1"></i>${pkg.Duration} Days</span>
+                                </div>
+                                <h5 class="card-title poppins-semibold mt-2">${pkg.PackageName}</h5>
+                                <p class="card-text text-muted inter-regular flex-grow-1">${pkg.Description}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                    <div>
+                                        <span class="fs-4 poppins-bold text-teal">₹${pkg.Price}</span>
+                                        <span class="text-muted small">/person</span>
+                                    </div>
+                                    <a href="package-details.html?id=${pkg.PackageID}" class="btn btn-brand rounded-pill px-4">View</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    pkgGrid.appendChild(col);
+                });
+            };
+
+            const applyFilters = () => {
+                const loc = document.getElementById('locationFilter').value.toLowerCase();
+                const price = parseInt(document.getElementById('priceRange').value);
+                const dur = document.getElementById('durationFilter').value;
+
+                const filtered = allPackages.filter(pkg => {
+                    const matchLoc = !loc || pkg.PackageName.toLowerCase().includes(loc);
+                    const matchPrice = pkg.Price <= price;
+                    let matchDur = true;
+                    if (dur === '1-3') matchDur = pkg.Duration <= 3;
+                    else if (dur === '4-7') matchDur = pkg.Duration > 3 && pkg.Duration <= 7;
+                    else if (dur === '8+') matchDur = pkg.Duration > 7;
+
+                    return matchLoc && matchPrice && matchDur;
+                });
+
+                renderPackages(filtered);
+            };
+
+            if (pkgGrid && pkgLoading) {
+                try {
+                    allPackages = await window.supabaseAPI.getPackages();
+                    pkgLoading.classList.add('d-none');
+                    applyFilters(); // Initial render with possible query params
+                } catch(e) { console.error(e); }
+            }
+
+            document.getElementById('applyFiltersBtn').addEventListener('click', applyFilters);
+            document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+                document.getElementById('locationFilter').value = '';
+                document.getElementById('priceRange').value = 25000;
+                document.getElementById('priceVal').textContent = '₹25000';
+                document.getElementById('durationFilter').value = '';
+                renderPackages(allPackages);
+            });
+        });
+    </script>
+</body>
+</html>
